@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Space Platform</title>
+  <link rel="stylesheet" href="Form.css">
+</head>
+<body>
+
+
+
+
+
+<nav>
+<ul>
+  <li><a href="index.html">Home</a></li>
+ <li><a href="Product.html">Models</a>
+	<ul>
+  	   <li><a href="Switches.html">100%</a></li>
+  	   <li><a href="Keycaps.html">75%</a></li>
+  	   <li><a href="Model.html">TKL</a></li>
+	</ul>
+ </li>
+ <li><a href="Switch.html">Switches</a>
+	<ul>
+  	   <li><a href="Linear.html">Linear</a></li>
+  	   <li><a href="Tactile.html">Tactile</a></li>
+  	   <li><a href="Clicky.html">Clicky</a></li>
+	</ul>
+ </li>
+ <li><a href="Product.html">Keycaps</a>
+	<ul>
+  	   <li><a href="ABS.html">Double-shot ABS</a></li>
+  	   <li><a href="PBT.html">Akko PBT</a></li>
+  	   <li><a href="Single.html">Single key cap</a></li>
+	</ul>
+ </li>
+  <li><a href="About.html">About us</a></li>
+
+
+</nav>
+
+
+
+
+  <div class="container">
+    <!-- Title section -->
+    <div class="title">Form Registrasi Pemesan</div>
+    <div class="content">
+      <!-- Form Isian -->
+      <form action="#">
+        <div class="user-details">
+          <!-- Input Nama -->
+          <div class="input-box">
+            <span class="details">Nama Pemesan </span>
+            <input type="text" placeholder="Masukan Nama Pemesan" required>
+          </div>
+          <!-- Input Username  -->
+          <div class="input-box">
+            <span class="details">Username</span>
+            <input type="text" placeholder="Masukkan username" required>
+          </div>
+          <!-- Input Password -->
+          <div class="input-box">
+            <span class="details">Password</span>
+            <input type="text" placeholder="Masukkan password" required>
+          </div>
+          <!-- Input Email -->
+          <div class="input-box">
+            <span class="details">Email</span>
+            <input type="text" placeholder="Masukkan email" required>
+          </div>
+          <!-- Input No Telepon -->
+          <div class="input-box">
+            <span class="details">Nomor Telepon </span>
+            <input type="text" placeholder="Masukkan Nomor Telepon" required>
+          </div>
+
+          <!-- Dropdown Produk Elektronik -->
+          <div class="input-box">
+            <span class="details">Pilih Produk Elektronik</span>
+            <select required>
+              <option value="">-- Pilih Produk --</option>
+              <option value="laptop">Laptop</option>
+              <option value="smartphone">Smartphone</option>
+              <option value="tv">Televisi</option>
+              <option value="kamera">Kamera</option>
+              <option value="speaker">Speaker</option>
+              <option value="headphone">Headphone</option>
+              <option value="printer">Printer</option>
+            </select>
+          </div>
+          <!-- Input Jumlah Produk Dibeli -->
+          <div class="input-box">
+            <span class="details">Jumlah Produk Dibeli</span>
+            <input type="number" min="1" placeholder="Masukkan jumlah produk" required>
+          </div>
+          </div>
+        <div class="gender-details">
+          <!-- Pilih Jenis Kelamin Pemesan -->
+          <input type="radio" name="gender" id="dot-1">
+          <input type="radio" name="gender" id="dot-2">
+          <input type="radio" name="gender" id="dot-3">
+          <span class="gender-title">Gender Pemesan</span>
+          <div class="category">
+            <!-- Label Laki-Laki -->
+            <label for="dot-1">
+              <span class="dot one"></span>
+              <span class="gender">Laki-Laki</span>
+            </label>
+            <!-- Label Perempuan -->
+            <label for="dot-2">
+              <span class="dot two"></span>
+              <span class="gender">Perempuan</span>
+            </label>
+          </div>
+        </div>
+        <!-- Submit button -->
+        <div class="button">
+          <input type="submit" value="Konfirmasi Pemesanan">
+        </div>
+      </form>
+    </div>
+  </div>
+
+
+
+
+
+
+
+</body>
+</html>

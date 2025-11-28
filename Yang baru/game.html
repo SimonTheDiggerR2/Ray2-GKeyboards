@@ -1,0 +1,294 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Detective Aufklärung — Case Files: The Missing Manuscript</title>
+<style>
+  :root{--bg:#fbfaf8;--card:#fff;--accent:#1f2d3d;--muted:#616567}
+  *{box-sizing:border-box;font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial}
+  body{margin:0;background:linear-gradient(180deg,#f8f6f2,#eef1f6);color:var(--accent)}
+  .wrap{max-width:1000px;margin:24px auto;padding:18px}
+  header{display:flex;align-items:center;gap:16px}
+  h1{margin:0;font-size:20px}
+  .layout{display:grid;grid-template-columns:260px 1fr;gap:14px;margin-top:14px}
+  .panel{background:var(--card);padding:14px;border-radius:12px;box-shadow:0 6px 18px rgba(31,45,61,0.06)}
+  .side .locations button,.people-list button{width:100%;padding:10px;border-radius:8px;border:1px solid #eee;background:transparent;margin:6px 0;cursor:pointer}
+  .log{height:140px;overflow:auto;padding:10px;border-radius:8px;border:1px dashed #eee;background:#fafafa}
+  .inventory{display:flex;flex-wrap:wrap;gap:6px}
+  .badge{background:#f2f8ff;padding:6px 8px;border-radius:999px;border:1px solid #dbeeff}
+  .scene-title{font-weight:700;margin:0 0 6px}
+  .desc{color:var(--muted);margin:0 0 12px}
+  .actions{display:flex;gap:10px;flex-wrap:wrap}
+  button.cta{background:var(--accent);color:#fff;padding:8px 12px;border-radius:8px;border:none;cursor:pointer}
+  .small{font-size:13px;color:var(--muted)}
+  .dialogue{border-left:3px solid #e6eefc;padding-left:10px;margin:8px 0;border-radius:6px;background:#fff}
+  .clue{padding:10px;border-radius:8px;border:1px solid #eee;background:#fff}
+  .puzzle{margin-top:8px}
+  input[type=text],input[type=number],select{padding:8px;border-radius:8px;border:1px solid #ddd;width:100%}
+  .result{padding:10px;border-radius:8px;margin-top:8px}
+  .success{background:#e6ffef;border:1px solid #bfeecd}
+  .fail{background:#fff2f2;border:1px solid #ffcfcf}
+  footer{margin-top:16px;text-align:center;color:var(--muted);font-size:13px}
+  @media (max-width:920px){.layout{grid-template-columns:1fr}} 
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <h1>Detective Aufklärung</h1>
+      <div style="margin-left:auto" class="small">Kasus: Manuskrip Hilang — nilailah dunia dengan nalar</div>
+    </header>
+
+    <div class="layout">
+      <aside class="side panel">
+        <h3 style="margin:0 0 8px">Lokasi & Tokoh</h3>
+        <div class="locations">
+          <button data-room="salon">Salon Tuan Licht — Diskusi Publik</button>
+          <button data-room="observatory">Observatorium Newton</button>
+          <button data-room="printing">Bengkel Percetakan</button>
+        </div>
+
+        <h4 style="margin-top:12px">Tokoh yang Bisa Diajak Bicara</h4>
+        <div class="people-list">
+          <button data-person="voltaire">Voltaire — Penulis & Skeptis</button>
+          <button data-person="newton">Isaac Newton — Ilmuwan</button>
+          <button data-person="rousseau">Rousseau — Pemikir Sosial</button>
+        </div>
+
+        <h4 style="margin-top:12px">Inventaris</h4>
+        <div class="inventory" id="inventory">— belum ada</div>
+
+        <h4 style="margin-top:12px">Log</h4>
+        <div class="log" id="log">Kamu adalah detektif yang ditugaskan menemukan manuskrip penting yang menggabungkan teori alam & gagasan sosial pencerahan. Gunakan akal, percakapan, dan bukti untuk memecahkan kasus.</div>
+      </aside>
+
+      <main class="panel">
+        <h2 class="scene-title" id="scene-title">Mulai Investigasi</h2>
+        <p class="desc" id="scene-desc">Kunjungi lokasi, ajak bicara tokoh, dan kumpulkan petunjuk. Setiap tokoh mewakili aspek Aufklärung: sains (Newton), skeptisisme & kebebasan berpendapat (Voltaire), dan gagasan masyarakat ideal (Rousseau). Tujuan: temukan manuskrip dan putuskan apakah isinya akan disebarkan demi kebaikan umum.</p>
+
+        <div id="main-area">
+          <p class="small">Tip: Mulai dari Observatorium untuk bertanya soal eksperimen, lalu ke Percetakan untuk bukti fisik.</p>
+          <div style="margin-top:12px" class="actions"><button class="cta" id="hint-btn">Minta Petunjuk</button></div>
+        </div>
+
+        <div id="interaction-area"></div>
+
+        <div style="margin-top:12px" class="panel">
+          <h4>Pilihan Akhir</h4>
+          <p class="desc">Setelah mengumpulkan minimal 3 bukti, putuskan apa yang akan kamu lakukan dengan manuskrip.</p>
+          <div class="actions">
+            <button class="cta" id="publish">Publikasikan Manuskrip (sebar ide pencerahan)</button>
+            <button class="cta" id="suppress">Sembunyikan Manuskrip (jaga stabilitas)</button>
+            <button class="cta" id="mediate">Mediated Release (revisi & sertakan konteks)</button>
+          </div>
+          <div id="final-result"></div>
+        </div>
+
+      </main>
+    </div>
+
+    <footer>Game edukatif: bertujuan memicu diskusi tentang sains, agama, dan utopia. Tokoh yang ada adalah representasi historis untuk konteks permainan.</footer>
+  </div>
+
+<script>
+// State
+const state = {clues:[],visited:{},talked:{},foundManuscript:false,score:{rational:0,empathy:0,prudence:0}};
+const logEl = document.getElementById('log');
+const inventoryEl = document.getElementById('inventory');
+const sceneTitle = document.getElementById('scene-title');
+const sceneDesc = document.getElementById('scene-desc');
+const interaction = document.getElementById('interaction-area');
+const mainArea = document.getElementById('main-area');
+
+function writeLog(t){const d=document.createElement('div');d.textContent=t;logEl.prepend(d);} 
+function updateInventory(){inventoryEl.innerHTML = state.clues.length? '': '— belum ada'; state.clues.forEach(c=>{const s=document.createElement('span');s.className='badge';s.textContent=c.title;inventoryEl.appendChild(s)});} 
+
+// Location handlers
+document.querySelectorAll('.locations button').forEach(b=>b.addEventListener('click',()=>openRoom(b.dataset.room)));
+document.querySelectorAll('.people-list button').forEach(b=>b.addEventListener('click',()=>talkTo(b.dataset.person)));
+
+function openRoom(room){interaction.innerHTML='';
+ if(room==='observatory'){
+   sceneTitle.textContent='Observatorium — Jejak Sains';
+   sceneDesc.textContent='Ruang eksperimen Newton: di sini kamu bisa memeriksa catatan eksperimen, berbicara soal hukum alam, dan mungkin menemukan petunjuk fisik.';
+   if(!state.visited.observatory){
+     interaction.innerHTML = `
+       <div class="clue">
+         <strong>Petunjuk: Catatan Eksperimen</strong>
+         <p class="small">Ada sketsa tentang jatuhnya apel dan notasi tentang "hukum yang konsisten". Beberapa catatan memperlihatkan frase: "Deus sive natura" (Tuhan atau alam).</p>
+         <div class="actions"><button class="cta" id="inspect-note">Periksa catatan</button></div>
+       </div>`;
+     document.getElementById('inspect-note').addEventListener('click',()=>{
+       state.clues.push({id:'note',title:'Catatan Newton',content:'Referensi pada hukum alam; frase deisme; coretan alamat percetakan.'}); state.visited.observatory=true; updateInventory(); writeLog('Menemukan Catatan Eksperimen — referensi deisme & alamat percetakan.');
+     })
+   } else {
+     interaction.innerHTML='<p class="small">Kamu sudah memeriksa observatorium.</p>';
+   }
+ }
+ if(room==='salon'){
+   sceneTitle.textContent='Salon Tuan Licht — Arena Publik';
+   sceneDesc.textContent='Tempat debat. Pembicaraan di sini memberi konteks filosofis — skeptisisme, kritik terhadap otoritas, dan gagasan kebebasan berpendapat.';
+   interaction.innerHTML = `
+     <div class="clue">
+       <strong>Diskusi Publik</strong>
+       <p class="small">Orang-orang berdebat: satu pihak takut ide baru mengganggu moral, pihak lain (seperti Voltaire) menyerukan toleransi dan kebebasan berbicara.</p>
+       <div class="actions"><button class="cta" id="join-debate">Ikut Mendengarkan</button></div>
+     </div>`;
+   document.getElementById('join-debate').addEventListener('click',()=>{
+     writeLog('Kamu mendengarkan debat tentang kebebasan berpendapat. Voltaire mendesak agar ide diuji, bukan disensor.');
+     state.visited.salon=true;
+   })
+ }
+ if(room==='printing'){
+   sceneTitle.textContent='Bengkel Percetakan — Bukti Fisik';
+   sceneDesc.textContent='Di sini manuskrip mungkin dicetak. Mesin cetak menyimpan jejak tinta dan cap keluarga.';
+   if(!state.visited.printing){
+     interaction.innerHTML = `
+       <div class="clue">
+         <strong>Petunjuk: Fragmen Manuskrip & Cap</strong>
+         <p class="small">Potongan halaman dengan topik: "Aturan Alam & Masyarakat Ideal". Ada cap kecil: "C.O." (kemungkinan singkatan keluarga Obscurus) dan noda tinta yang cocok dengan catatan observatorium.</p>
+         <div class="actions"><button class="cta" id="collect-frag">Ambil Fragmen</button></div>
+       </div>`;
+     document.getElementById('collect-frag').addEventListener('click',()=>{
+       state.clues.push({id:'frag',title:'Fragmen Manuskrip',content:'Bagian tulisan tentang hukum alam & masyarakat ideal; cap C.O.; cocok dengan catatan observatorium.'}); state.visited.printing=true; updateInventory(); writeLog('Mengamankan fragmen manuskrip dari bengkel percetakan.');
+       checkManuscriptComplete();
+     })
+   } else interaction.innerHTML='<p class="small">Bengkel telah diperiksa.</p>';
+ }
+}
+
+// Conversations
+function talkTo(person){interaction.innerHTML='';
+ if(person==='voltaire'){
+   sceneTitle.textContent='Voltaire — Pena & Sindiran';
+   sceneDesc.textContent='Voltaire adalah pendukung kebebasan berpendapat, kritik terhadap dogma, dan promotor toleransi.';
+   if(!state.talked.voltaire){
+     interaction.innerHTML = `
+       <div class="panel">
+         <div class="dialogue"><strong>Voltaire:</strong> "Saya percaya kita harus menolak takhyul dengan canda, dan menuntut kebebasan berfikir."</div>
+         <p class="small">Tanyakan: <select id="vol-choice"><option value="1">Mengapa toleransi penting?</option><option value="2">Haruskah manuskrip disebarkan tanpa sensor?</option></select></p>
+         <div class="actions"><button class="cta" id="vol-ask">Tanya</button></div>
+         <div id="vol-response"></div>
+       </div>`;
+     document.getElementById('vol-ask').addEventListener('click',()=>{
+       const val=document.getElementById('vol-choice').value; const r=document.getElementById('vol-response');
+       if(val==='1') r.innerHTML='<div class="result">Voltaire: "Toleransi mencegah pembunuhan ide; ide yang kuat akan bertahan melalui debat."</div>';
+       else r.innerHTML='<div class="result">Voltaire: "Ya — jika manuskrip benar dan memperluas kebebasan, publikasi adalah tugas moral."</div>';
+       state.talked.voltaire=true; state.score.rational+=1; writeLog('Berbicara dengan Voltaire: argumen untuk kebebasan berpikir.');
+     })
+   } else interaction.innerHTML='<p class="small">Sudah bicara dengan Voltaire.</p>';
+ }
+
+ if(person==='newton'){
+   sceneTitle.textContent='Isaac Newton — Hukum & Pengamatan';
+   sceneDesc.textContent='Newton menjelaskan hukum alam melalui matematika dan eksperimen. Tanyakan tentang hubungan sains dan Tuhan.';
+   if(!state.talked.newton){
+     interaction.innerHTML = `
+       <div class="panel">
+         <div class="dialogue"><strong>Newton:</strong> "Saya melihat alam seperti mesin; hukum bekerja konsisten. Sebagian menyebut ini bukti deisme."</div>
+         <p class="small">Eksperimen singkat: jika sebuah apel jatuh dari ketinggian 2 meter tanpa hambatan, kira-kira berapa waktu yang dibutuhkan? (gunakan g=9.8 m/s^2). Masukkan angka dalam detik (desimal diperbolehkan).</p>
+         <div class="puzzle"><input type="number" step="0.01" id="newton-answer" placeholder="Masukkan waktu (detik)"></div>
+         <div class="actions"><button class="cta" id="newton-check">Cek</button></div>
+         <div id="newton-result"></div>
+       </div>`;
+     document.getElementById('newton-check').addEventListener('click',()=>{
+       const ans = parseFloat(document.getElementById('newton-answer').value);
+       const correct = Math.sqrt(2*2/9.8); // t = sqrt(2h/g)
+       const diff = Math.abs(ans - correct);
+       const res = document.getElementById('newton-result');
+       if(!isNaN(ans) && diff < 0.15){
+         res.innerHTML = `<div class="result success">Benar. Waktu ~ ${correct.toFixed(2)} s. Newton mengangguk pada deduksimu — sains memberi prediksi yang dapat diuji.</div>`;
+         state.score.rational+=2; state.talked.newton=true; writeLog('Berhasil menyelesaikan eksperimen Newton secara sederhana.');
+         // hint: manuscript link
+         if(!state.foundManuscript){ state.clues.push({id:'newton-note',title:'Catatan Newton (referensi eksperimen)',content:'Catatan merujuk pada aplikasi hukum alam pada masyarakat.'}); updateInventory(); }
+       } else {
+         res.innerHTML = `<div class="result fail">Jawaban kurang tepat. Coba hitung t = sqrt(2h/g) dengan h=2, g≈9.8.</div>`;
+       }
+     })
+   } else interaction.innerHTML='<p class="small">Sudah bicara dengan Newton.</p>';
+ }
+
+ if(person==='rousseau'){
+   sceneTitle.textContent='Jean-Jacques Rousseau — Kontrak Sosial';
+   sceneDesc.textContent='Rousseau bicara soal masyarakat ideal dan bagaimana manusia berinteraksi dalam ruang politik.';
+   if(!state.talked.rousseau){
+     interaction.innerHTML = `
+       <div class="panel">
+         <div class="dialogue"><strong>Rousseau:</strong> "Masyarakat yang baik menjustifikasi aturan melalui kemauan bersama, bukan hanya tradisi."</div>
+         <p class="small">Pertanyaan: jika manuskrip bisa membantu rancangan pendidikan yang membuat masyarakat lebih rasional, apakah kamu akan mendukung publikasinya? (pilih alasan)</p>
+         <div class="actions"><button class="cta" id="rous-yes">Ya — pendidikan lebih penting</button><button class="cta" id="rous-no">Tidak — bisa disalahgunakan</button></div>
+         <div id="rous-result"></div>
+       </div>`;
+     document.getElementById('rous-yes').addEventListener('click',()=>{
+       document.getElementById('rous-result').innerHTML = '<div class="result">Rousseau tersenyum: "Pendidikan sarana paling kuat untuk memperbaiki masyarakat."</div>'; state.score.empathy+=1; state.talked.rousseau=true; state.clues.push({id:'rousseau-note',title:'Catatan Rousseau',content:'Referensi pendidikan & masyarakat ideal.'}); updateInventory(); writeLog('Bicara dengan Rousseau: dukungan untuk pendidikan & gagasan utopis.'); checkManuscriptComplete();
+     })
+     document.getElementById('rous-no').addEventListener('click',()=>{
+       document.getElementById('rous-result').innerHTML = '<div class="result">Rousseau mengangguk prihatin: "Benar, pengetahuan tanpa kebijaksanaan bisa memicu ketidakadilan."</div>'; state.score.prudence+=1; state.talked.rousseau=true; writeLog('Rousseau mengingatkan bahaya penerapan tanpa pertimbangan.');
+     })
+   } else interaction.innerHTML='<p class="small">Sudah bicara dengan Rousseau.</p>';
+ }
+}
+
+// Helpers
+function checkManuscriptComplete(){
+  // If we have at least three clue types, consider manuscript found
+  const ids = state.clues.map(c=>c.id);
+  const needed = ['note','frag','newton-note','rousseau-note','pamphlet','list'];
+  // simple rule: if we have frag + note + one more => found
+  if(!state.foundManuscript){
+    const hasFrag = ids.includes('frag');
+    const hasNote = ids.includes('note') || ids.includes('newton-note');
+    const hasR = ids.includes('rousseau-note');
+    if(hasFrag && hasNote && (hasR || ids.length>=3)){
+      state.foundManuscript=true; state.clues.push({id:'manuscript',title:'Manuskrip Lengkap',content:'Teks lengkap membahas hubungan hukum alam, moral, dan rencana pendidikan untuk masyarakat yang rasional.'}); updateInventory(); writeLog('Kamu berhasil merekonstruksi manuskrip lengkap! Sekarang pilih apa yang akan kamu lakukan dengan isinya.');
+    }
+  }
+}
+
+// Hints
+document.getElementById('hint-btn').addEventListener('click',()=>{
+  writeLog('Petunjuk: Observatorium -> percetakan -> ajak tokoh untuk konteks. Manusia & Alam adalah tema utama manuskrip.');
+})
+
+// Final choices
+document.getElementById('publish').addEventListener('click',()=>finalDecision('publish'));
+document.getElementById('suppress').addEventListener('click',()=>finalDecision('suppress'));
+document.getElementById('mediate').addEventListener('click',()=>finalDecision('mediate'));
+
+function finalDecision(choice){
+  const resultEl = document.getElementById('final-result'); resultEl.innerHTML='';
+  if(!state.foundManuscript){ resultEl.innerHTML = '<div class="result fail">Kamu belum menemukan manuskrip lengkap. Kumpulkan bukti lebih dulu.</div>'; writeLog('Percobaan keputusan gagal — manuskrip belum utuh.'); return; }
+
+  // Evaluate player's scores and choice to craft ending that highlights Aufklärung themes
+  const r = state.score.rational; const e = state.score.empathy; const p = state.score.prudence;
+  if(choice==='publish'){
+    // publicize
+    if(r+e > p){
+      resultEl.innerHTML = '<div class="result success"><strong>Publikasi Berhasil.</strong> Manuskrip menyebar, mendorong diskusi tentang sains dan pendidikan. Ada resistensi, tapi gerakan pencerahan tumbuh. Kamu memilih kepercayaan pada rasio & pendidikan.</div>';
+      writeLog('Keputusan: Publikasi — efek: muncul debat, reformasi pendidikan di beberapa kota.');
+    } else {
+      resultEl.innerHTML = '<div class="result fail"><strong>Publikasi Memicu Kekacauan.</strong> Tanpa langkah hati-hati, ide disalahgunakan oleh elite untuk tujuan sendiri. Sebuah pelajaran tentang pentingnya kehati-hatian dalam menyebarkan pengetahuan.</div>';
+      writeLog('Publikasi tanpa kehati-hatian menyebabkan resistensi & penyalahgunaan.');
+    }
+  }
+  if(choice==='suppress'){
+    if(p > r+e){
+      resultEl.innerHTML = '<div class="result success"><strong>Manuskrip Disembunyikan — Stabilitas Dipertahankan.</strong> Beberapa kekerasan dihindari, namun generasi berikut kehilangan akses pada gagasan reformasi yang mungkin bermanfaat.</div>';
+      writeLog('Keputusan: Manuskrip disembunyikan — stabilitas jangka pendek terjaga.');
+    } else {
+      resultEl.innerHTML = '<div class="result fail"><strong>Penyembunyian Menimbulkan Kontroversi.</strong> Tindakanmu terlihat seperti sensor; rakyat mulai curiga pada otoritas yang menahan pengetahuan.</div>';
+      writeLog('Menyembunyikan karya meredam kemajuan, menimbulkan kecurigaan.');
+    }
+  }
+  if(choice==='mediate'){
+    resultEl.innerHTML = '<div class="result success"><strong>Rilis Terkelola.</strong> Manuskrip direvisi dengan konteks, pedoman pendidikan ditambahkan, dan pelajaran tentang etika sains disisipkan — meminimalkan risiko penyalahgunaan sambil menyebarkan pengetahuan.</div>';
+    writeLog('Keputusan: Mediated Release — pendekatan seimbang.');
+  }
+}
+
+// initial log
+writeLog('Selamat datang, detektif. Temukan manuskrip yang hilang dengan menyeimbangkan akal, empati, dan kehati-hatian. Mulai dari Observatorium atau Percetakan mungkin berguna.');
+</script>
+</body>
+</html>
